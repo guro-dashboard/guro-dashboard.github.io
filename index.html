@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GURO-Dashboard</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+
+/* Dark theme (same tokens as sfl_guro body.app-dark) */
+:root{
+  color-scheme:dark;
+  --pixel-font:"Press Start 2P",monospace;
+  --page:#15161a;
+  --sfl-outer:#22242c;
+  --sfl-inner:#2c2e36;
+  --sfl-label-bg:#3c3f47;
+  --sfl-label-text:#c7c4bc;
+  --sfl-outer-border:#181425;
+  --sfl-text:#c7c4bc;
+  --sfl-profit:#5fbf68;
+  --sfl-loss:#e8654a;
+  --px-border-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAATElEQVR42mNkgILZM/r/M2ABqRmFjAwMDAyMMEULl+/Apo4hPtIDonj2jP7/NvbuWE1jYGBgsLF3/z97Rv9/JgYiwVBQSHTwMBIb4ADBEB8T0W7XlwAAAABJRU5ErkJggg==);
+  --px-card-corner-width:3px;
+  --px-panel-corner-width:4px;
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; min-height:100%; }
+body{
+  background:var(--page);
+  color:var(--sfl-text);
+  font-family:var(--pixel-font);
+  padding:14px 12px 84px;
+  image-rendering:pixelated;
+}
+.wrap{ max-width:420px; margin:0 auto; display:flex; flex-direction:column; gap:10px; }
+.main{ display:flex; flex-direction:column; gap:10px; }
+.stats{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+
+/* guro-frame, copied from sfl_guro */
+.guro-frame{
+  border-style:solid !important;
+  border-width:var(--px-card-corner-width) !important;
+  border-color:var(--sfl-outer-border) !important;
+  border-image:var(--px-border-image) 20% stretch !important;
+  border-radius:0 !important;
+  image-rendering:pixelated !important;
+}
+
+/* header: same as dh-log-outer title row */
+.hdr{
+  background:var(--sfl-inner);
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:10px 12px;
+  border-width:var(--px-panel-corner-width) !important;
+}
+.hdr h1{ margin:0; font-size:11px; font-weight:400; line-height:1.4; letter-spacing:.5px; }
+/* stat cards: guro-status-label / guro-status-value / guro-market-amount sizes */
+.card{ background:var(--sfl-inner); padding:8px 10px; }
+.card .label{
+  display:inline-block; font-size:11px; line-height:1.3; letter-spacing:.3px;
+  padding:4px 8px; margin-bottom:8px;
+  background:var(--sfl-label-bg); color:var(--sfl-label-text);
+}
+.card .value{
+  background:var(--sfl-outer); padding:8px 10px; text-align:center;
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-size:17px; font-weight:600; line-height:1.3; word-break:break-word;
+}
+.row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.row .card{ padding:8px; }
+
+.foot{ display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:9px; line-height:1.5; }
+/* floating sync button: copy of sfl_guro .global-mini-sync (dark values) */
+.global-mini-sync{
+  position:fixed; right:22px; bottom:22px; z-index:1700;
+  width:42px; height:42px; padding:0;
+  background:#4a4f5c; border:2px solid #c7c4bc; border-radius:50%;
+  box-shadow:2px 2px 0 rgba(0,0,0,.4); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.global-mini-sync .sync-icon-img{ width:26.4px; height:26.4px; display:block; image-rendering:pixelated; pointer-events:none; }
+.global-mini-sync:active{ transform:translate(2px,2px); box-shadow:0 0 0 rgba(0,0,0,.4); }
+.global-mini-sync.is-syncing{ animation:digMiniSyncSpin .7s linear infinite; }
+.global-mini-sync:focus-visible{ outline:2px dashed var(--sfl-text); outline-offset:3px; }
+@keyframes digMiniSyncSpin{ from{ transform:rotate(0); } to{ transform:rotate(360deg); } }
+
+/* registered farm ids */
+.farms{ background:var(--sfl-inner); padding:6px; }
+.farms .label{
+  display:inline-block; font-size:11px; line-height:1.3; letter-spacing:.3px;
+  padding:4px 8px; margin:2px 0 6px 2px;
+  background:var(--sfl-label-bg); color:var(--sfl-label-text);
+}
+.farm-list{
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px;
+  max-height:50vh; overflow-y:auto; overscroll-behavior:contain; padding:0;
+}
+.farm-id{
+  background:var(--sfl-outer); padding:8px 4px; text-align:center;
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-size:14px; font-weight:600; line-height:1.3; overflow-wrap:anywhere;
+}
+.farm-msg{ grid-column:1 / -1; font-size:11px; line-height:1.6; padding:6px 2px; }
+@media (min-width:700px){
+  .wrap{ max-width:940px; }
+  .main{ flex-direction:row; align-items:stretch; gap:10px; }
+  .stats{ flex:0 0 420px; }
+  .farms{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; contain:size; min-height:260px; }
+  .farms .label{ align-self:flex-start; }
+  .farm-list{ grid-template-columns:repeat(3,minmax(0,1fr)); flex:1 1 auto; min-height:0; max-height:none; align-content:start; }
+}
+@media (prefers-reduced-motion:reduce){ *{ transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<main class="wrap loading" id="app">
+
+  <header class="hdr guro-frame">
+    <h1>GURO-Dashboard</h1>
+  </header>
+
+  <div class="main">
+  <div class="stats">
+
+  <section class="card guro-frame date">
+    <div class="label">Date Today (UTC)</div>
+    <div class="value guro-frame" id="vDate">--</div>
+  </section>
+
+  <section class="card guro-frame">
+    <div class="label">Total Registered Farms</div>
+    <div class="value guro-frame" id="vTotal">--</div>
+  </section>
+
+  <section class="card guro-frame">
+    <div class="label">New Registered Today</div>
+    <div class="value guro-frame" id="vNew">--</div>
+  </section>
+
+  <div class="row">
+    <section class="card guro-frame">
+      <div class="label">Active Today</div>
+      <div class="value guro-frame" id="vToday">--</div>
+    </section>
+    <section class="card guro-frame">
+      <div class="label">Active Last 7 Days</div>
+      <div class="value guro-frame" id="vWeek">--</div>
+    </section>
+  </div>
+
+  <div class="err guro-frame" id="err" role="alert"></div>
+
+  </div>
+
+  <section class="farms guro-frame">
+    <div class="label">Registered Farm Ids</div>
+    <div class="farm-list" id="farmList"><div class="farm-msg">Loading...</div></div>
+  </section>
+  </div>
+
+  <div class="foot"><span id="updated">Not updated yet</span></div>
+</main>
+
+<button type="button" id="refreshBtn" class="global-mini-sync" aria-label="Refresh" title="Refresh"><img class="sync-icon-img" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAWfmNhQlgAABZ+anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAFlhqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjA0MDNmNGFjLWJlNjAtNDhmMy1hNGMxLWNmZGI3YjgwYTFlYwAAAAOTanVtYgAAAClqdW1kYzJhcwARABCAAACqADibcQNjMnBhLmFzc2VydGlvbnMAAAAAuGp1bWIAAABEanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5pbmdyZWRpZW50LnYzAAAAABhjMnNoiM/MZ2sKMeVwJkB3foWvPwAAAGxjYm9yo2lkYzpmb3JtYXRpaW1hZ2UvcG5namluc3RhbmNlSUR4LHhtcDppaWQ6OGM4MzE3NjYtYjViYi00YzE4LTg2YmYtYmQ5YTRiODFhZjJjbHJlbGF0aW9uc2hpcGhwYXJlbnRPZgAAAeJqdW1iAAAAQWp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuYWN0aW9ucy52MgAAAAAYYzJzaOYy8ZTo8ClpbJO6FPH8CVcAAAGZY2JvcqJnYWN0aW9uc4KiZmFjdGlvbmtjMnBhLm9wZW5lZGpwYXJhbWV0ZXJzoWtpbmdyZWRpZW50c4GiY3VybHgtc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5pbmdyZWRpZW50LnYzZGhhc2hYIK3QAMUkcV3q+xsx9HFPvVt38KnavK1tBvrn5ReZdEK2pGZhY3Rpb254HWNvbS5hbnRocm9waWMuY2xhdWRlLnByb3ZpZGVkanBhcmFtZXRlcnOheB9jb20uYW50aHJvcGljLm9yaWdpbi1jb25maWRlbmNlZ3Vua25vd25rZGVzY3JpcHRpb254ZkNsYXVkZSBwcm92aWRlZCB0aGlzIGZpbGUgYXQgdGhlIHJlcXVlc3Qgb2YgYSB1c2VyIGFuZCBtYXkgaGF2ZSBjcmVhdGVkIG9yIG1vZGlmaWVkIHRoZSBmaWxlIGNvbnRlbnRzLm1zb2Z0d2FyZUFnZW50oWRuYW1lZkNsYXVkZXJhbGxBY3Rpb25zSW5jbHVkZWT1AAAAyGp1bWIAAABAanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5oYXNoLmRhdGEAAAAAGGMyc2ibeRqrrBitWr/Wnx4iKH0aAAAAgGNib3KlY2FsZ2ZzaGEyNTZjcGFkTQAAAAAAAAAAAAAAAABkaGFzaFggROaqVyF6RVHMN/CucNKtSUWLf7CTmbchGFwX7dZt3g1kbmFtZW5qdW1iZiBtYW5pZmVzdGpleGNsdXNpb25zgaJlc3RhcnQYIWZsZW5ndGgZFooAAAI+anVtYgAAACdqdW1kYzJjbAARABCAAACqADibcQNjMnBhLmNsYWltLnYyAAAAAg9jYm9ypWNhbGdmc2hhMjU2aXNpZ25hdHVyZXhNc2VsZiNqdW1iZj0vYzJwYS91cm46YzJwYTowNDAzZjRhYy1iZTYwLTQ4ZjMtYTRjMS1jZmRiN2I4MGExZWMvYzJwYS5zaWduYXR1cmVqaW5zdGFuY2VJRHgseG1wOmlpZDo1YWU3YTZkYy04OGI5LTQ3OTgtYTBiYi0xOThiMGQ5MTYzZjJyY3JlYXRlZF9hc3NlcnRpb25zg6JjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggrdAAxSRxXer7GzH0cU+9W3fwqdq8rW0G+uflF5l0QraiY3VybHgqc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5hY3Rpb25zLnYyZGhhc2hYIFh1LHw8A/t+sI0QxJQYI+kt99j6aAciPOMllOLfWxl1omN1cmx4KXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaGFzaC5kYXRhZGhhc2hYIOs/qSqmt6xud7rcznQdJAC0eVutxzwsg8MxYMO1RMhudGNsYWltX2dlbmVyYXRvcl9pbmZvo2RuYW1lb0FudGhyb3BpYyBGaWxlc2d2ZXJzaW9uZTEuMC4wa3NwZWNWZXJzaW9uZTIuNC4wAAAQOGp1bWIAAAAoanVtZGMyY3MAEQAQgAAAqgA4m3EDYzJwYS5zaWduYXR1cmUAAAAQCGNib3LShFkCEqIBJhghWQIKMIICBjCCAY2gAwIBAgIUQOWgCu7COdC+uIP6BkIFPWdVEwAwCgYIKoZIzj0EAwMwSTEXMBUGA1UEChMOQW50aHJvcGljLCBQQkMxLjAsBgNVBAMTJUFudGhyb3BpYyBDb250ZW50IENyZWRlbnRpYWxzIFJvb3QgQ0EwHhcNMjYwODA3MTg0MzU2WhcNMjgwODA2MTk0MzU2WjBEMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEpMCcGA1UEAxMgQW50aHJvcGljIENsYXVkZSBDb250ZW50IFNpZ25pbmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASYegpry1AYBRTVNL1CpTlbROnY3dey+UrsF9C3phYrATN3ZHf93Mo8RQN0KOUuOn19P4oWNFWe5n2/She9N7eTo1gwVjAOBgNVHQ8BAf8EBAMCB4AwFQYDVR0lBA4wDAYKKwYBBAGD6F4CATAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFM5R4gSBTmRbI/jjxM+aPpzB11zCMAoGCCqGSM49BAMDA2cAMGQCMDFzHRSeAXrSy1WOzkbhPZ6Km2wGTmZ/2gK18k8BQGXyqz88Rdrz6CTX9flAnYNVxgIwcF9c3fVhqmJKpi+UhasNUMko69cyX6STPfta3Q8EjyzDjzoyrol46FP6VFHhvUcJoWNwYWRZDZ4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2WECflPO5Qrj+RRHN8/sP5vwvdDhv6V/+x0Z2aaH5nQaY+D22zAkwQ0EyzHguy4bRa5LRI+pwCbDW9O1PuP8TRDTtaklsCQAAAzlJREFUeJzt3bGNVDsYgNEBUQIBDSARUQNI5GT0QUxMTB9k5EhQAxHSa+AFr4dHTjBGMpZ99zsnXe3s7MInS7/n2rcbAAAAAAAAAAAAAAAAAAAAAABwike738Buz54+/3/3e9jp3//+Sf8feLz7DcBOAiBNAKQJgDQBkCYA0gRA2uVnwKvn+D++f1z58su9fPVh6etffR/BCkCaAEgTAGkCIE0ApAmANAGQdvwMd3bOf/U5/m6z+win7xNYAUgTAGkCIE0ApAmANAGQJgDSjp7R3m7jfYDP79/c/f4Xb1//1ffzu59fvi19/ZHVv9/I1fcJrACkCYA0AZAmANIEQJoASBMAaU92v4FZ7z59vfv1z5t//mqzv9/sPsLoeYvV5xLNsgKQJgDSBECaAEgTAGkCIE0ApB3/PMDI6ff8zn7e/er3H5z+vIAVgDQBkCYA0gRAmgBIEwBpAiBt+z7A6jn37nNnVrv6/Qm77zG2ApAmANIEQJoASBMAaQIgTQCkLT8XaPWcejRHHv38h75PMLo/YbfRv+/o/oXZc5msAKQJgDQBkCYA0gRAmgBIEwBp0zPw0z+Pfvq5NLNm//6n37M8O+f3PADcIQDSBECaAEgTAGkCIE0ApA1n3KfP+WfZJ7hvdp9g95x/xApAmgBIEwBpAiBNAKQJgDQBkDa9DzB77szqz5uPzM6pT98HGFm9T7B7zj9iBSBNAKQJgDQBkCYA0gRAmgBIW/48wMjuc2ke+vMAsx76Pc5WANIEQJoASBMAaQIgTQCkCYC05TPY088Vmt0HGJmdc6+ew8/aPcefZQUgTQCkCYA0AZAmANIEQJoASNs+w509d2j3uUKr9xFGTt8nOX2fwApAmgBIEwBpAiBNAKQJgDQBkLZ9Rrv7Hlvue+j3J1gBSBMAaQIgTQCkCYA0AZAmANKOntHebuv3CUauvo8wmuOPnH7P7ywrAGkCIE0ApAmANAGQJgDSBEDa0TPaP7H7HuPTzc7xR06f849YAUgTAGkCIE0ApAmANAGQJgDSLj3D/RtOv4d3tavP8WdZAUgTAGkCIE0ApAmANAGQJgAAAAAAAAAAAAAAAAAAAAAAAACO8Asbnb0SSnd2/QAAAABJRU5ErkJggg=="></button>
+
+<script>
+(function () {
+  "use strict";
+  var API = "https://sfl-harvest-log.bossweki.workers.dev/stats?key=sfl-guro";
+  var API_FARMS = "https://sfl-harvest-log.bossweki.workers.dev/farms?key=sfl-guro";
+  var $ = function (id) { return document.getElementById(id); };
+
+  function fmt(n) { return typeof n === "number" ? n.toLocaleString("en-US") : "--"; }
+
+  function showError(msg) {
+    var e = $("err");
+    e.innerHTML = "<b>Could not load data.</b><br>" + msg;
+    e.classList.add("show");
+  }
+
+  function renderFarms(ids) {
+    var box = $("farmList");
+    box.textContent = "";
+    if (!ids.length) {
+      var m = document.createElement("div");
+      m.className = "farm-msg"; m.textContent = "No registered farms yet.";
+      box.appendChild(m); return;
+    }
+    var frag = document.createDocumentFragment();
+    ids.forEach(function (id) {
+      var d = document.createElement("div");
+      d.className = "farm-id guro-frame";
+      d.textContent = String(id);
+      frag.appendChild(d);
+    });
+    box.appendChild(frag);
+  }
+  function farmMsg(t) {
+    var box = $("farmList");
+    box.textContent = "";
+    var m = document.createElement("div");
+    m.className = "farm-msg"; m.textContent = t;
+    box.appendChild(m);
+  }
+
+  async function loadStats() {
+    try {
+      var res = await fetch(API, { cache: "no-store" });
+      var d = await res.json();
+      if (!res.ok || !d || d.ok !== true) throw new Error((d && d.error) || ("HTTP " + res.status));
+      $("vDate").textContent = d.todayUTC || "--";
+      $("vTotal").textContent = fmt(d.registeredFarms);
+      $("vNew").textContent = fmt(d.newToday);
+      $("vToday").textContent = fmt(d.activeToday);
+      $("vWeek").textContent = fmt(d.activeLast7Days);
+      $("err").classList.remove("show");
+      return true;
+    } catch (e) {
+      showError("Check the connection, or that the worker allows this site (CORS).");
+      return false;
+    }
+  }
+
+  async function loadFarms() {
+    try {
+      var res = await fetch(API_FARMS, { cache: "no-store" });
+      var d = await res.json();
+      if (!res.ok || !d || d.ok !== true || !Array.isArray(d.farms)) throw new Error("bad");
+      renderFarms(d.farms);
+      return true;
+    } catch (e) {
+      farmMsg("Could not load farm ids. Make sure the worker has the /farms route.");
+      return false;
+    }
+  }
+
+  var busy = false;
+  async function load() {
+    if (busy) return;
+    busy = true;
+    var btn = $("refreshBtn");
+    btn.classList.add("is-syncing");
+    $("app").classList.add("loading");
+    var r = await Promise.all([loadStats(), loadFarms()]);
+    if (r[0]) $("updated").textContent = "Updated " + new Date().toLocaleTimeString();
+    $("app").classList.remove("loading");
+    btn.classList.remove("is-syncing");
+    busy = false;
+  }
+  $("refreshBtn").addEventListener("click", load);
+  load();
+})();
+</script>
+</body>
+</html>
